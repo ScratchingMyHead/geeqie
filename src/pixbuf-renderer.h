@@ -267,6 +267,7 @@ struct PixbufRenderer
 	RendererFuncs *renderer2;
 
 	gboolean ignore_alpha;
+	gboolean free_pan; /**< allow panning beyond image edges */
 };
 
 struct PixbufRendererClass

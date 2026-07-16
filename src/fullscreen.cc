@@ -34,6 +34,7 @@
 #include "compat.h"
 #include "image-load.h"
 #include "image.h"
+#include "pixbuf-renderer.h"
 #include "intl.h"
 #include "misc.h"
 #include "options.h"
@@ -622,6 +623,11 @@ FullScreenData *fullscreen_start(GtkWidget *window, ImageWindow *imd,
 	if (options->stereo.enable_fsmode)
 		{
 		image_stereo_set(fs->imd, options->stereo.fsmode);
+		}
+
+	if (options->fullscreen.free_pan)
+		{
+		PIXBUF_RENDERER(fs->imd->pr)->free_pan = TRUE;
 		}
 
 	/* Use the XDG Activation protocol to get the newly created fullscreen

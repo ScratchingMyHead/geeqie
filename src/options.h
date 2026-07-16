@@ -289,6 +289,7 @@ struct ConfOptions
 		gint screen;
 		gboolean clean_flip;
 		gboolean disable_saver;
+		gboolean free_pan;
 	} fullscreen;
 
 	/* image overlay */
@@ -437,6 +438,7 @@ struct ConfOptions
 
 	gboolean disable_gpu; /**< GPU - see main.cc */
 	gboolean override_disable_gpu; /**< GPU - see main.cc */
+	gboolean new_instance; /**< start a new instance instead of reusing existing one */
 
 	std::vector<std::string> disabled_plugins;
 };

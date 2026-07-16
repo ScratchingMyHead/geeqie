@@ -490,6 +490,8 @@ static void pixbuf_renderer_init(PixbufRenderer *pr)
 	g_signal_connect_after(G_OBJECT(box), "size_allocate",
 			       G_CALLBACK(pr_size_cb), pr);
 
+	pr->free_pan = FALSE;
+
 	pr_signals_connect(pr);
 }
 
@@ -1586,7 +1588,11 @@ static gboolean pr_scroll_clamp(PixbufRenderer *pr)
 	old_xs = pr->x_scroll;
 	old_ys = pr->y_scroll;
 
-	if (pr->x_offset > 0)
+	if (pr->free_pan)
+		{
+		/* no clamping — allow free panning beyond image edges */
+		}
+	else if (pr->x_offset > 0)
 		{
 		pr->x_scroll = 0;
 		}
@@ -1595,7 +1601,11 @@ static gboolean pr_scroll_clamp(PixbufRenderer *pr)
 		pr->x_scroll = std::clamp(pr->x_scroll, 0, pr->width - pr->vis_width);
 		}
 
-	if (pr->y_offset > 0)
+	if (pr->free_pan)
+		{
+		/* no clamping */
+		}
+	else if (pr->y_offset > 0)
 		{
 		pr->y_scroll = 0;
 		}

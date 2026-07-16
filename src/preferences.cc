@@ -2261,6 +2261,8 @@ static void config_tab_windows(GtkWidget *notebook)
 			      options->fullscreen.clean_flip, &c_options->fullscreen.clean_flip);
 	pref_checkbox_new_int(group, _("Disable screen saver"),
 			      options->fullscreen.disable_saver, &c_options->fullscreen.disable_saver);
+	pref_checkbox_new_int(group, _("Free panning (allow panning beyond image edges)"),
+			      options->fullscreen.free_pan, &c_options->fullscreen.free_pan);
 }
 
 static GtkWidget *osd_profiles(gint i)
@@ -3406,6 +3408,14 @@ static void config_tab_behavior(GtkWidget *notebook)
 	add_mouse_selection_menu(table, 0, 0, _("Mouse button Back:"), options->mouse_button_8, &c_options->mouse_button_8);
 	table = pref_table_new(group, 2, 1, FALSE, FALSE);
 	add_mouse_selection_menu(table, 0, 0, _("Mouse button Forward:"), options->mouse_button_9, &c_options->mouse_button_9);
+
+	pref_spacer(group, PREF_PAD_GROUP);
+
+	group = pref_group_new(vbox, FALSE, _("Instance"), GTK_ORIENTATION_VERTICAL);
+
+	checkbox = pref_checkbox_new_int(group, _("Start a new instance (requires restart)"),
+				options->new_instance, &c_options->new_instance);
+	gtk_widget_set_tooltip_text(checkbox, _("Start a new Geeqie process instead of reusing the existing one. This setting takes effect after restarting Geeqie."));
 
 	pref_spacer(group, PREF_PAD_GROUP);
 

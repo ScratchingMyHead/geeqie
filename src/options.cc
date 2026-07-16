@@ -105,6 +105,7 @@ ConfOptions *init_options(ConfOptions *options)
 
 	options->fullscreen.clean_flip = FALSE;
 	options->fullscreen.disable_saver = TRUE;
+	options->fullscreen.free_pan = FALSE;
 	options->fullscreen.screen = -1;
 
 	options->appimage_notifications = TRUE;
@@ -244,6 +245,7 @@ ConfOptions *init_options(ConfOptions *options)
 
 	options->disable_gpu = FALSE;
 	options->override_disable_gpu = FALSE;
+	options->new_instance = FALSE;
 
 	for (i = 0; i < FILE_FORMAT_CLASSES; i++)
 		{

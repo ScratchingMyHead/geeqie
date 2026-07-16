@@ -182,6 +182,7 @@ GOptionEntry command_line_options[] =
 	{ "last"                      ,   0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE  , nullptr, _("last image")                                                                  , nullptr },
 	{ "log-file"                  , 'o', G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, nullptr, _("save log data to file")                                                       , "<file>" },
 	{ "lua"                       ,   0, G_OPTION_FLAG_NONE, G_OPTION_ARG_STRING, nullptr, _("run lua script on FILE")                                                      , "<FILE>,<lua script>" },
+	{ "new-instance"              ,   0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE  , nullptr, _("start a new instance instead of reusing existing one")                          , nullptr },
 	{ "new-window"                ,   0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE  , nullptr, _("new window")                                                                  , nullptr },
 	{ "next"                      , 'n', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE  , nullptr, _("next image")                                                                  , nullptr },
 	{ "pixel-info"                ,   0, G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE  , nullptr, _("print pixel info of mouse pointer on current image")                          , nullptr },
@@ -1020,6 +1021,10 @@ Version: Geeqie "), VERSION, nullptr);
 
 	const gchar *gq_new_instance = g_getenv("GQ_NEW_INSTANCE");
 	if (gq_new_instance && tolower(gq_new_instance[0]) == 'y')
+		{
+		app = gtk_application_new("org.geeqie.Geeqie", static_cast<GApplicationFlags>(G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_NON_UNIQUE | G_APPLICATION_SEND_ENVIRONMENT));
+		}
+	else if (search_command_line_for_option(argc, const_cast<const gchar**>(argv), "--new-instance"))
 		{
 		app = gtk_application_new("org.geeqie.Geeqie", static_cast<GApplicationFlags>(G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_NON_UNIQUE | G_APPLICATION_SEND_ENVIRONMENT));
 		}

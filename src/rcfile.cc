@@ -524,6 +524,7 @@ static void write_global_attributes(GString *outstr, gint indent)
 	WRITE_NL(); WRITE_INT(*options, fullscreen.screen);
 	WRITE_NL(); WRITE_BOOL(*options, fullscreen.clean_flip);
 	WRITE_NL(); WRITE_BOOL(*options, fullscreen.disable_saver);
+	WRITE_NL(); WRITE_BOOL(*options, fullscreen.free_pan);
 
 	WRITE_SEPARATOR();
 
@@ -629,6 +630,7 @@ static void write_global_attributes(GString *outstr, gint indent)
 
 	/* GPU - see main.cc */
 	WRITE_NL(); WRITE_BOOL(*options, override_disable_gpu);
+	WRITE_NL(); WRITE_BOOL(*options, new_instance);
 	WRITE_SEPARATOR();
 
 	/* Alternate similarity algorithm */
@@ -1004,6 +1006,7 @@ static gboolean load_global_params(const gchar **attribute_names, const gchar **
 		if (READ_INT(*options, fullscreen.screen)) continue;
 		if (READ_BOOL(*options, fullscreen.clean_flip)) continue;
 		if (READ_BOOL(*options, fullscreen.disable_saver)) continue;
+		if (READ_BOOL(*options, fullscreen.free_pan)) continue;
 
 		/* Image overlay */
 		if (READ_CHAR(*options, image_overlay.template_string)) continue;
@@ -1100,6 +1103,7 @@ static gboolean load_global_params(const gchar **attribute_names, const gchar **
 
 		/* GPU - see main.cc */
 		if (READ_BOOL(*options, override_disable_gpu)) continue;
+		if (READ_BOOL(*options, new_instance)) continue;
 
 		/* Alternative similarity algorithm */
 		if (READ_BOOL(*options, alternate_similarity_algorithm.enabled)) continue;
