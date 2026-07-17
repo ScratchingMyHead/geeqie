@@ -2082,20 +2082,8 @@ static gboolean pr_mouse_motion_cb(GtkWidget *widget, GdkEventMotion *event, gpo
 	/* do the scroll - not when drawing rectangle*/
 	if (!options->draw_rectangle)
 		{
-		if (pr->free_pan)
-			{
-			gint dx = (pr->drag_last_x - event->x) * accel;
-			gint dy = (pr->drag_last_y - event->y) * accel;
-			pr->x_scroll += dx;
-			pr->y_scroll += dy;
-			pr->renderer->invalidate_region(pr->renderer,
-			                                {0, 0, pr->viewport_width, pr->viewport_height});
-			}
-		else
-			{
-			pixbuf_renderer_scroll(pr, (pr->drag_last_x - event->x) * accel,
-						(pr->drag_last_y - event->y) * accel);
-			}
+		pixbuf_renderer_scroll(pr, (pr->drag_last_x - event->x) * accel,
+					(pr->drag_last_y - event->y) * accel);
 		}
 	pr_drag_signal(pr, event);
 
