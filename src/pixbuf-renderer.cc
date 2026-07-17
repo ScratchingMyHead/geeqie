@@ -2238,12 +2238,24 @@ static gboolean pr_mouse_release_cb(GtkWidget *widget, GdkEventButton *bevent, g
 		return TRUE;
 		}
 
-	GdkSeat *seat = gdk_display_get_default_seat(gdk_window_get_display(bevent->window));
-	GdkDevice *device = gdk_seat_get_pointer(seat);
-	if (gdk_display_device_is_grabbed(gdk_device_get_display(device), device) && gtk_widget_has_grab(GTK_WIDGET(pr)))
+	if (pr->in_drag)
 		{
 		widget_input_ungrab(widget);
 		widget_set_cursor(widget, -1);
+
+		/* widget_input_grab replaces the event mask with one that excludes
+		 * GDK_BUTTON_PRESS_MASK, GDK_SCROLL_MASK, and GDK_LEAVE_NOTIFY_MASK.
+		 * If a previous grab-ungrab cycle left prev_event_mask corrupted (the
+		 * original mask is overwritten by a subsequent widget_input_grab call),
+		 * the restored mask misses these flags. Re-apply them so that clicks
+		 * and scroll-wheel events always work. */
+		GdkWindow *win = gtk_widget_get_window(GTK_WIDGET(pr));
+		if (win)
+			{
+			gdk_window_set_events(win, static_cast<GdkEventMask>(
+				gdk_window_get_events(win) |
+				GDK_BUTTON_PRESS_MASK | GDK_SCROLL_MASK));
+			}
 		}
 
 	if (pr->drag_moved < PR_DRAG_SCROLL_THRESHHOLD)
