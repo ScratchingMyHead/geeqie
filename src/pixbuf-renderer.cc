@@ -490,7 +490,7 @@ static void pixbuf_renderer_init(PixbufRenderer *pr)
 	g_signal_connect_after(G_OBJECT(box), "size_allocate",
 			       G_CALLBACK(pr_size_cb), pr);
 
-	pr->free_pan = FALSE;
+	pr->free_pan = options->fullscreen.free_pan;
 
 	pr_signals_connect(pr);
 }

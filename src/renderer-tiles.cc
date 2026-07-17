@@ -227,31 +227,42 @@ void rt_border_draw(RendererTiles *rt, GdkRectangle border_rect)
 		return;
 		}
 
-	if (pr->vis_width < pr->viewport_width)
-		{
-		if (pr->x_offset > 0)
-			{
-			draw_if_intersect({0, 0, pr->x_offset, pr->viewport_height});
-			}
+	gint image_left = pr->x_offset - rt->x_scroll;
+	gint image_top = pr->y_offset - rt->y_scroll;
+	gint image_right = image_left + pr->vis_width;
+	gint image_bottom = image_top + pr->vis_height;
 
-		gint right_edge = pr->x_offset + pr->vis_width;
-		if (pr->viewport_width > right_edge)
+	/* Left border */
+	if (image_left > 0)
+		{
+		draw_if_intersect({0, 0, image_left, pr->viewport_height});
+		}
+
+	/* Right border */
+	if (pr->viewport_width > image_right)
+		{
+		draw_if_intersect({image_right, 0, pr->viewport_width - image_right, pr->viewport_height});
+		}
+
+	/* Top border (between left and right edges) */
+	if (image_top > 0)
+		{
+		gint top_left = std::max(0, image_left);
+		gint top_right = std::min(pr->viewport_width, image_right);
+		if (top_right > top_left)
 			{
-			draw_if_intersect({right_edge, 0, pr->viewport_width - right_edge, pr->viewport_height});
+			draw_if_intersect({top_left, 0, top_right - top_left, image_top});
 			}
 		}
 
-	if (pr->vis_height < pr->viewport_height)
+	/* Bottom border (between left and right edges) */
+	if (pr->viewport_height > image_bottom)
 		{
-		if (pr->y_offset > 0)
+		gint bottom_left = std::max(0, image_left);
+		gint bottom_right = std::min(pr->viewport_width, image_right);
+		if (bottom_right > bottom_left)
 			{
-			draw_if_intersect({pr->x_offset, 0, pr->vis_width, pr->y_offset});
-			}
-
-		gint bottom_edge = pr->y_offset + pr->vis_height;
-		if (pr->viewport_height  > bottom_edge)
-			{
-			draw_if_intersect({pr->x_offset, bottom_edge, pr->vis_width, pr->viewport_height - bottom_edge});
+			draw_if_intersect({bottom_left, image_bottom, bottom_right - bottom_left, pr->viewport_height - image_bottom});
 			}
 		}
 
@@ -1836,6 +1847,42 @@ void renderer_scroll(void *renderer, gint x_off, gint y_off)
 		         rt->x_scroll, y_off > 0 ? rt->y_scroll + (pr->vis_height - h) : rt->y_scroll,
 		         pr->vis_width, h, true, TileRender::ALL, FALSE, false);
 		}
+
+	if (pr->free_pan)
+		{
+		cairo_t *cr = cairo_create(rt->surface);
+		cairo_set_source_rgb(cr, pr->color.red, pr->color.green, pr->color.blue);
+
+		gint left = std::max(0, pr->x_offset - pr->x_scroll);
+		if (left > 0)
+			{
+			cairo_rectangle(cr, 0, 0, left, pr->viewport_height);
+			cairo_fill(cr);
+			}
+
+		gint right = std::max(0, pr->x_scroll + pr->viewport_width - pr->x_offset - pr->width);
+		if (right > 0)
+			{
+			cairo_rectangle(cr, pr->viewport_width - right, 0, right, pr->viewport_height);
+			cairo_fill(cr);
+			}
+
+		gint top = std::max(0, pr->y_offset - pr->y_scroll);
+		if (top > 0)
+			{
+			cairo_rectangle(cr, 0, 0, pr->viewport_width, top);
+			cairo_fill(cr);
+			}
+
+		gint bottom = std::max(0, pr->y_scroll + pr->viewport_height - pr->y_offset - pr->height);
+		if (bottom > 0)
+			{
+			cairo_rectangle(cr, 0, pr->viewport_height - bottom, pr->viewport_width, bottom);
+			cairo_fill(cr);
+			}
+
+		cairo_destroy(cr);
+		}
 }
 
 void renderer_area_changed(void *renderer, GdkRectangle src)
@@ -2049,7 +2096,7 @@ gboolean rt_draw_cb(GtkWidget *, cairo_t *cr, gpointer data)
 		cairo_clip(cr);
 		cairo_paint(cr);
 
-		cairo_rectangle(cr, rt->pr->x_offset + rt->stereo_off_x, rt->pr->y_offset + rt->stereo_off_y, rt->pr->vis_width, rt->pr->vis_height);
+		cairo_rectangle(cr, rt->pr->x_offset - rt->x_scroll + rt->stereo_off_x, rt->pr->y_offset - rt->y_scroll + rt->stereo_off_y, rt->pr->vis_width, rt->pr->vis_height);
 		cairo_clip(cr);
 		cairo_set_source_surface(cr, rt->surface, 0, 0);
 		cairo_paint(cr);

@@ -1996,6 +1996,7 @@ static void image_options_set(ImageWindow *imd, ConfOptions *options)
 	image_stereo_set(imd, options->stereo.mode);
 	pixbuf_renderer_stereo_fixed_set(PIXBUF_RENDERER(imd->pr), options->stereo.fixed_size,
 	                                 options->stereo.fixed_left, options->stereo.fixed_right);
+	PIXBUF_RENDERER(imd->pr)->free_pan = options->fullscreen.free_pan;
 }
 
 /**

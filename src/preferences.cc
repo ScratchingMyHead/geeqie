@@ -517,6 +517,7 @@ static void config_window_apply()
 	options->mouse_button_9 = c_options->mouse_button_9;
 
 	options->override_disable_gpu = c_options->override_disable_gpu;
+	options->new_instance = c_options->new_instance;
 
 	config_tab_keywords_save();
 
@@ -2141,6 +2142,11 @@ static void config_tab_image(GtkWidget *notebook)
 	pref_color_button_new(group, _("Border color"), &options->image.border_color, &c_options->image.border_color);
 	pref_color_button_new(group, _("Alpha channel color 1"), &options->image.alpha_color_1, &c_options->image.alpha_color_1);
 	pref_color_button_new(group, _("Alpha channel color 2"), &options->image.alpha_color_2, &c_options->image.alpha_color_2);
+
+	group = pref_group_new(vbox, FALSE, _("Panning"), GTK_ORIENTATION_VERTICAL);
+
+	pref_checkbox_new_int(group, _("Allow panning beyond image edges"),
+			      options->fullscreen.free_pan, &c_options->fullscreen.free_pan);
 }
 
 /* windows tab */
@@ -2261,8 +2267,6 @@ static void config_tab_windows(GtkWidget *notebook)
 			      options->fullscreen.clean_flip, &c_options->fullscreen.clean_flip);
 	pref_checkbox_new_int(group, _("Disable screen saver"),
 			      options->fullscreen.disable_saver, &c_options->fullscreen.disable_saver);
-	pref_checkbox_new_int(group, _("Free panning (allow panning beyond image edges)"),
-			      options->fullscreen.free_pan, &c_options->fullscreen.free_pan);
 }
 
 static GtkWidget *osd_profiles(gint i)
@@ -3413,9 +3417,9 @@ static void config_tab_behavior(GtkWidget *notebook)
 
 	group = pref_group_new(vbox, FALSE, _("Instance"), GTK_ORIENTATION_VERTICAL);
 
-	checkbox = pref_checkbox_new_int(group, _("Start a new instance (requires restart)"),
+	checkbox = pref_checkbox_new_int(group, _("Allow multiple instances"),
 				options->new_instance, &c_options->new_instance);
-	gtk_widget_set_tooltip_text(checkbox, _("Start a new Geeqie process instead of reusing the existing one. This setting takes effect after restarting Geeqie."));
+	gtk_widget_set_tooltip_text(checkbox, _("Start a new Geeqie process instead of reusing the existing one when Geeqie is launched again."));
 
 	pref_spacer(group, PREF_PAD_GROUP);
 

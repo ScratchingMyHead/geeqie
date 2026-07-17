@@ -1019,12 +1019,25 @@ Version: Geeqie "), VERSION, nullptr);
 		return status;
 		}
 
+	gboolean config_new_instance = FALSE;
+	g_autofree gchar *rc_path = g_build_filename(get_rc_dir(), RC_FILE_NAME, NULL);
+	g_autofree gchar *rc_content = nullptr;
+	if (g_file_get_contents(rc_path, &rc_content, nullptr, nullptr))
+		{
+		config_new_instance = (g_strstr_len(rc_content, -1, "new_instance = \"true\"") != nullptr);
+		}
+
+
 	const gchar *gq_new_instance = g_getenv("GQ_NEW_INSTANCE");
 	if (gq_new_instance && tolower(gq_new_instance[0]) == 'y')
 		{
 		app = gtk_application_new("org.geeqie.Geeqie", static_cast<GApplicationFlags>(G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_NON_UNIQUE | G_APPLICATION_SEND_ENVIRONMENT));
 		}
 	else if (search_command_line_for_option(argc, const_cast<const gchar**>(argv), "--new-instance"))
+		{
+		app = gtk_application_new("org.geeqie.Geeqie", static_cast<GApplicationFlags>(G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_NON_UNIQUE | G_APPLICATION_SEND_ENVIRONMENT));
+		}
+	else if (config_new_instance)
 		{
 		app = gtk_application_new("org.geeqie.Geeqie", static_cast<GApplicationFlags>(G_APPLICATION_HANDLES_COMMAND_LINE | G_APPLICATION_NON_UNIQUE | G_APPLICATION_SEND_ENVIRONMENT));
 		}
