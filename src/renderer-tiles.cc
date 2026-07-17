@@ -189,6 +189,36 @@ void rt_sync_scroll(RendererTiles *rt)
 	               : pr->y_scroll;
 }
 
+void rt_get_visible_x(const RendererTiles *rt, gint &vx, gint &vw)
+{
+	const PixbufRenderer *pr = rt->pr;
+	if (pr->free_pan && pr->x_offset > 0)
+		{
+		vx = 0;
+		vw = pr->width;
+		}
+	else
+		{
+		vx = rt->x_scroll;
+		vw = pr->vis_width;
+		}
+}
+
+void rt_get_visible_y(const RendererTiles *rt, gint &vy, gint &vh)
+{
+	const PixbufRenderer *pr = rt->pr;
+	if (pr->free_pan && pr->y_offset > 0)
+		{
+		vy = 0;
+		vh = pr->height;
+		}
+	else
+		{
+		vy = rt->y_scroll;
+		vh = pr->vis_height;
+		}
+}
+
 /*
  *-------------------------------------------------------------------
  * borders
@@ -1428,24 +1458,29 @@ void rt_tile_expose(RendererTiles *rt, ImageTile *it,
 	cairo_t *cr;
 
 	/* clamp to visible */
-	if (it->x + x < rt->x_scroll)
+	gint vx, vw;
+	rt_get_visible_x(rt, vx, vw);
+	gint vy, vh;
+	rt_get_visible_y(rt, vy, vh);
+
+	if (it->x + x < vx)
 		{
-		w -= rt->x_scroll - it->x - x;
-		x = rt->x_scroll - it->x;
+		w -= vx - it->x - x;
+		x = vx - it->x;
 		}
-	if (it->x + x + w > rt->x_scroll + pr->vis_width)
+	if (it->x + x + w > vx + vw)
 		{
-		w = rt->x_scroll + pr->vis_width - it->x - x;
+		w = vx + vw - it->x - x;
 		}
 	if (w < 1) return;
-	if (it->y + y < rt->y_scroll)
+	if (it->y + y < vy)
 		{
-		h -= rt->y_scroll - it->y - y;
-		y = rt->y_scroll - it->y;
+		h -= vy - it->y - y;
+		y = vy - it->y;
 		}
-	if (it->y + y + h > rt->y_scroll + pr->vis_height)
+	if (it->y + y + h > vy + vh)
 		{
-		h = rt->y_scroll + pr->vis_height - it->y - y;
+		h = vy + vh - it->y - y;
 		}
 	if (h < 1) return;
 
@@ -1472,9 +1507,12 @@ void rt_tile_expose(RendererTiles *rt, ImageTile *it,
 
 gboolean rt_tile_is_visible(RendererTiles *rt, ImageTile *it)
 {
-	PixbufRenderer *pr = rt->pr;
-	return (it->x + it->w >= rt->x_scroll && it->x < rt->x_scroll + pr->vis_width &&
-		it->y + it->h >= rt->y_scroll && it->y < rt->y_scroll + pr->vis_height);
+	gint vx, vw;
+	rt_get_visible_x(rt, vx, vw);
+	gint vy, vh;
+	rt_get_visible_y(rt, vy, vh);
+	return (it->x + it->w >= vx && it->x < vx + vw &&
+		it->y + it->h >= vy && it->y < vy + vh);
 }
 
 /*
@@ -1675,12 +1713,10 @@ void rt_queue_clear(RendererTiles *rt)
 
 bool rt_clamp_to_visible(const RendererTiles *rt, gint &x, gint &y, gint &w, gint &h)
 {
-	const gint vx = rt->x_scroll;
-	const gint vy = rt->y_scroll;
-
-	const PixbufRenderer *pr = rt->pr;
-	const gint vw = pr->vis_width;
-	const gint vh = pr->vis_height;
+	gint vx, vw;
+	rt_get_visible_x(rt, vx, vw);
+	gint vy, vh;
+	rt_get_visible_y(rt, vy, vh);
 
 	if (vw < 1 || vh < 1 || x + w < vx || x > vx + vw || y + h < vy || y > vy + vh) return false;
 
@@ -1699,8 +1735,6 @@ bool rt_clamp_to_visible(const RendererTiles *rt, gint &x, gint &y, gint &w, gin
 void rt_queue_to_tiles(RendererTiles *rt, gint x, gint y, gint w, gint h,
                        TileRender render, gboolean new_data, bool only_existing)
 {
-	PixbufRenderer *pr = rt->pr;
-
 	const gint x1 = ROUND_DOWN(x, rt->tile_width);
 	const gint x2 = ROUND_UP(x + w, rt->tile_width);
 
@@ -1713,12 +1747,17 @@ void rt_queue_to_tiles(RendererTiles *rt, gint x, gint y, gint w, gint h,
 			{
 			ImageTile *it;
 
+			gint vx, vw;
+			rt_get_visible_x(rt, vx, vw);
+			gint vy, vh;
+			rt_get_visible_y(rt, vy, vh);
+
 			it = rt_tile_get(rt, i, j,
 					 (only_existing &&
-					  (i + rt->tile_width < rt->x_scroll ||
-					   i > rt->x_scroll + pr->vis_width ||
-					   j + rt->tile_height < rt->y_scroll ||
-					   j > rt->y_scroll + pr->vis_height)));
+					  (i + rt->tile_width < vx ||
+					   i > vx + vw ||
+					   j + rt->tile_height < vy ||
+					   j > vy + vh)));
 			if (it)
 				{
 				if ((render == TileRender::ALL && it->render_done != TileRender::ALL) ||
@@ -1802,6 +1841,48 @@ void renderer_scroll(void *renderer, gint x_off, gint y_off)
 		{
 		/* scrolled completely to new material */
 		rt_queue(rt, 0, 0, pr->width, pr->height, true, TileRender::ALL, FALSE, false);
+		return;
+		}
+
+	if (pr->free_pan && pr->x_offset > 0)
+		{
+		/* Image fits within viewport — pixel-shift optimization assumes
+		 * window [x_scroll, x_scroll + vis_width] but with free_pan the
+		 * entire image is always visible. Re-render everything. */
+		rt_queue(rt, 0, 0, pr->width, pr->height, true, TileRender::ALL, FALSE, false);
+
+		cairo_t *cr = cairo_create(rt->surface);
+		cairo_set_source_rgb(cr, pr->color.red, pr->color.green, pr->color.blue);
+
+		gint left = std::max(0, pr->x_offset - pr->x_scroll);
+		if (left > 0)
+			{
+			cairo_rectangle(cr, 0, 0, left, pr->viewport_height);
+			cairo_fill(cr);
+			}
+
+		gint right = std::max(0, pr->x_scroll + pr->viewport_width - pr->x_offset - pr->width);
+		if (right > 0)
+			{
+			cairo_rectangle(cr, pr->viewport_width - right, 0, right, pr->viewport_height);
+			cairo_fill(cr);
+			}
+
+		gint top = std::max(0, pr->y_offset - pr->y_scroll);
+		if (top > 0)
+			{
+			cairo_rectangle(cr, 0, 0, pr->viewport_width, top);
+			cairo_fill(cr);
+			}
+
+		gint bottom = std::max(0, pr->y_scroll + pr->viewport_height - pr->y_offset - pr->height);
+		if (bottom > 0)
+			{
+			cairo_rectangle(cr, 0, pr->viewport_height - bottom, pr->viewport_width, bottom);
+			cairo_fill(cr);
+			}
+
+		cairo_destroy(cr);
 		return;
 		}
 
