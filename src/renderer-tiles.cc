@@ -1836,16 +1836,32 @@ void renderer_scroll(void *renderer, gint x_off, gint y_off)
 
 	if (w > 0)
 		{
-		rt_queue(rt,
-		         x_off > 0 ? rt->x_scroll + (pr->vis_width - w) : rt->x_scroll, rt->y_scroll,
-		         w, pr->vis_height, true, TileRender::ALL, FALSE, false);
+		gint nw = abs(x_off);
+
+		/* Left non-overlap: area that was visible only in old or only in new view */
+		gint left_start = std::min(rt->x_scroll, rt->x_scroll - x_off);
+		rt_queue(rt, left_start, rt->y_scroll, nw, pr->vis_height,
+		         true, TileRender::ALL, FALSE, false);
+
+		/* Right non-overlap: area that was visible only in old or only in new view */
+		gint right_start = std::min(rt->x_scroll + pr->vis_width,
+		                            (rt->x_scroll - x_off) + pr->vis_width);
+		rt_queue(rt, right_start, rt->y_scroll, nw, pr->vis_height,
+		         true, TileRender::ALL, FALSE, false);
 		}
 	if (h > 0)
 		{
 		/** @FIXME to optimize this, remove overlap */
-		rt_queue(rt,
-		         rt->x_scroll, y_off > 0 ? rt->y_scroll + (pr->vis_height - h) : rt->y_scroll,
-		         pr->vis_width, h, true, TileRender::ALL, FALSE, false);
+		gint nh = abs(y_off);
+
+		gint top_start = std::min(rt->y_scroll, rt->y_scroll - y_off);
+		rt_queue(rt, rt->x_scroll, top_start, pr->vis_width, nh,
+		         true, TileRender::ALL, FALSE, false);
+
+		gint bottom_start = std::min(rt->y_scroll + pr->vis_height,
+		                             (rt->y_scroll - y_off) + pr->vis_height);
+		rt_queue(rt, rt->x_scroll, bottom_start, pr->vis_width, nh,
+		         true, TileRender::ALL, FALSE, false);
 		}
 
 	if (pr->free_pan)
